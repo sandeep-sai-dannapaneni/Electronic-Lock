@@ -1,0 +1,28 @@
+module lock(clk,reset_in,b0_in,b1_in,out);
+input clk,reset_in,b0_in,b1_in;
+output out;
+//output [6:0] segments;
+wire reset,b0,b1;
+button b_reset(clk,reset_in,reset);
+button b_0(clk,b0_in,b0);
+button b_1(clk,b1_in,b1);
+// state assignments
+parameter S_RESET = 0; parameter S_0 = 1; parameter S_01 = 2;
+parameter S_010 = 3; parameter S_0101 = 4; parameter S_01011 = 5;
+// implement state transition diagram
+reg [2:0] state;
+always @ (posedge clk) begin
+if (reset) state <= S_RESET;
+else case (state)
+S_RESET: state <= b0 ? S_0 : b1 ? S_RESET : state;
+S_0: state <= b0 ? S_0 : b1 ? S_01 : state;
+S_01: state <= b0 ? S_010 : b1 ? S_RESET : state;
+S_010: state <= b0 ? S_0 : b1 ? S_0101 : state;
+S_0101: state <= b0 ? S_010 : b1 ? S_01011 : state;
+S_01011: state <= b0 ? S_0 : b1 ? S_RESET : state;
+default: state <= S_RESET; // handle unused states
+endcase
+end
+assign out = (state == S_01011);
+//led_decoder l(state,segments); // debugging!
+endmodule
